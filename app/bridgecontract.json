@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.22;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+contract AGCBridge is Ownable, ReentrancyGuard {
+    IERC20 public agcToken;
+
+    mapping(address => uint256) private lockedBalances;
+
+    constructor(IERC20 _agcToken, address initialOwner) Ownable(initialOwner) {
+        agcToken = _agcToken;
+    }
+
+    function lockTokens(uint256 amount) external nonReentrant {
+        require(amount > 0, "Amount must be greater than 0");
+
+        agcToken.transferFrom(msg.sender, address(this), amount);
+        lockedBalances[msg.sender] += amount;
+        emit TokensLocked(msg.sender, amount);
+    }
+
+    
+
+    function getLockedBalance(address account) external view returns (uint256) {
+        return lockedBalances[account];
+    }
+
+    event TokensLocked(address indexed account, uint256 amount);
+    event TokensUnlocked(address indexed account, uint256 amount);
+}
